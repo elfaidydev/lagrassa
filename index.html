@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2a3324">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>لا غراسا | المنيو</title>
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="preload" href="assets/logo.png" as="image">
+  <link rel="preload" href="assets/products/placeholder-plate.svg" as="image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js" } }</script>
+</head>
+<body>
+
+<!-- intro: logo while loading, then a cloudy veil slides off from the right (RTL) -->
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__veil">
+    <span class="intro__cloud intro__cloud--a"></span>
+    <span class="intro__cloud intro__cloud--b"></span>
+    <span class="intro__cloud intro__cloud--c"></span>
+  </div>
+  <div class="intro__in">
+    <img class="intro__logo" src="assets/logo.png" alt="La Grassa" width="640" height="240" decoding="async">
+    <p class="intro__tag" dir="ltr" lang="en">
+      <span class="intro__tag-line" aria-hidden="true"></span>
+      <span class="intro__tag-text">Italian flavor, made in Saudi</span>
+      <span class="intro__tag-line" aria-hidden="true"></span>
+    </p>
+    <div class="intro__bar"><i id="introBar"></i></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+
+  <div class="tables" id="tables" aria-hidden="true"></div>
+  <canvas class="fx" id="fx" aria-hidden="true"></canvas>
+  <div class="shade" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="top__brand">
+      <img class="top__logo" src="assets/logo.png" alt="La Grassa" width="640" height="240" decoding="async">
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="أقسام المنيو"><span class="tabs__ind" id="tabInd"></span></nav>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="stage__in" id="stageIn">
+      <div class="arc" id="arc" aria-label="Choose a dish">
+        <svg viewBox="0 0 1000 1000" aria-hidden="true">
+          <path pathLength="1" d="M 67 250 A 500 500 0 0 1 933 250" fill="none" stroke="rgba(245,237,216,.5)" stroke-width="2.4"/>
+        </svg>
+      </div>
+
+      <div class="wheel" id="wheel" aria-hidden="true"><div class="ring" id="ring"></div></div>
+
+      <button class="turn turn--prev" id="prev" type="button" aria-label="الصنف السابق">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="turn turn--next" id="next" type="button" aria-label="الصنف التالي">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <p class="counter" id="counter" dir="ltr">01 / 05</p>
+    </div>
+  </main>
+
+  <footer class="info">
+    <div class="info__in" id="infoIn">
+      <h1 class="info__name" id="name"></h1>
+      <p class="info__price"><span id="price"></span><span class="sar" role="img" aria-label="ريال سعودي"></span></p>
+    </div>
+  </footer>
+</div>
+<script type="module" src="script.js"></script>
+</body>
+</html>
