@@ -189,12 +189,14 @@ function placeDot(d, slot, snap) {
 let swapTimer = 0;
 function layout(first, delta = 0) {
   const i0 = idx(turn);
-  ring.style.setProperty("--turn", `calc(${RTL ? turn : -turn} * var(--step))`);
+  const ringTurn = N === 2 ? idx(turn) : turn;
+  ring.style.setProperty("--turn", `calc(${RTL ? ringTurn : -ringTurn} * var(--step))`);
   DISHES.forEach((dish, i) => {
     const slot = slotOf(i, turn), el = slots[i];
-    const jumped = !first && slot !== prevSlots[i] - delta;     /* wrapped round the back of the ring */
+    const slotStep = Math.abs(slot - prevSlots[i]);
+    const jumped = !first && slotStep > Math.max(1, Math.abs(delta)); /* wrap على القوس الخلفي */
     if (jumped) { el.style.opacity = 0; el.classList.add("no-move"); }
-    const spin = slot + turn;
+    const spin = slot + ringTurn;
     el.style.setProperty("--slot", String(RTL ? -spin : spin));
     /* الصنف في النص يفضل مستوي؛ اللي على الجنب يميل شوية بس حسب مكانه على القوس */
     const tilt = dish.wide ? 6 : (dish.upright ? 10 : 16);
@@ -226,15 +228,26 @@ function layout(first, delta = 0) {
 function lock(ms) { busy = true; setTimeout(() => { busy = false; }, ms); }
 function step(dir) {
   if (busy || N < 2) return false;
-  turn += dir; layout(false, dir); lock(750);
+  if (N === 2) {
+    /* صنفين فقط: لا تُراكِم turn وإلا العجلة تلف دورات زائدة (نفس idx بزوايا مختلفة) */
+    turn = idx(turn) === 0 ? 1 : 0;
+  } else {
+    turn += dir;
+  }
+  layout(false, dir);
+  lock(750);
   if (fx) fx.kick(spinDir(dir));
   return true;
 }
 function goTo(i) {
   const cur = idx(turn);
   if (i === cur || busy || N < 2) return;
-  let d = (i - cur + N) % N; if (d > N / 2) d -= N;           /* shortest way round */
-  turn += d; layout(false, d); lock(900);
+  let d = (i - cur + N) % N;
+  if (d > N / 2) d -= N;
+  if (N === 2) turn = i;
+  else turn += d;
+  layout(false, d);
+  lock(900);
   if (fx) fx.kick(spinDir(Math.sign(d)));
 }
 

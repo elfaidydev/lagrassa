@@ -48,21 +48,32 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 .shade { position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to bottom, rgba(12, 15, 10, .5), transparent 22%, transparent 55%, rgba(12, 15, 10, .55)); }
 
-/* ── header: brand + section tabs ── */
+/* ── header: logo pill + section tabs on one line ── */
 .top {
   position: relative; z-index: 20;
-  padding: calc(env(safe-area-inset-top) + 10px) clamp(16px, 4vw, 28px) 8px;
-  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: calc(env(safe-area-inset-top) + 10px) clamp(12px, 3.5vw, 28px) 8px;
+  display: flex; justify-content: center;
 }
-.top__brand { display: flex; align-items: center; justify-content: center; gap: 12px; }
-.top__logo { display: block; width: auto; height: clamp(34px, 9vw, 48px); object-fit: contain; }
-
-.tabs {
-  position: relative; width: min(100%, 520px);
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
-  padding: 6px; border-radius: 22px; border: 1px solid rgba(245, 237, 216, .38);
+.top__bar {
+  display: flex; align-items: stretch; gap: clamp(10px, 2.8vw, 14px);
+  width: min(100%, 640px);
+  direction: ltr;
+}
+.top__pill {
+  border-radius: 22px; border: 1px solid rgba(245, 237, 216, .38);
   background: rgba(22, 28, 18, .72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 10px 32px rgba(0, 0, 0, .22);
+}
+.top__brand {
+  flex: none; display: flex; align-items: center; justify-content: center;
+  padding: 6px clamp(12px, 3vw, 18px); min-height: 54px;
+}
+.top__logo { display: block; width: auto; height: clamp(28px, 7.5vw, 40px); object-fit: contain; }
+
+.tabs {
+  position: relative; flex: 1 1 0; min-width: 0;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
+  padding: 6px;
 }
 .tabs__ind {
   position: absolute; top: 6px; bottom: 6px; left: 0; width: var(--w, 0); transform: translateX(var(--x, 0)); border-radius: 16px;
@@ -84,7 +95,10 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 .tab:focus-visible { outline: 2px solid var(--cream); outline-offset: 2px; }
 
 @media (max-width: 520px) {
-  .tabs { gap: 5px; padding: 5px; border-radius: 20px; }
+  .top__pill { border-radius: 20px; }
+  .top__brand { min-height: 50px; padding: 5px 10px; }
+  .top__logo { height: 26px; }
+  .tabs { gap: 5px; padding: 5px; }
   .tabs__ind { top: 5px; bottom: 5px; border-radius: 15px; }
   .tab { padding: 10px 4px; min-height: 40px; font-size: 11.5px; }
   .tab__long { display: none; }
@@ -230,9 +244,10 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 /* ── phone held sideways (short + wide): the wheel moves to one side, the text to the other ── */
 @media (orientation: landscape) and (max-height: 620px) {
   .app { grid-template-columns: minmax(230px, 38%) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-  .top { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; gap: 16px; padding: calc(env(safe-area-inset-top) + 8px) clamp(16px, 3vw, 40px) 0; }
-  .top__logo { height: 34px; }
-  .tabs { width: auto; max-width: 56vw; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .top { grid-column: 1 / -1; justify-content: stretch; padding: calc(env(safe-area-inset-top) + 8px) clamp(16px, 3vw, 40px) 0; }
+  .top__bar { width: 100%; max-width: none; }
+  .top__logo { height: 30px; }
+  .tabs { flex: 1; max-width: none; }
   .tab { padding: 8px 4px; min-height: 34px; font-size: 10px; }
   .tab__long { display: none; }
   .tab__short { display: block; }
