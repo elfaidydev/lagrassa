@@ -27,7 +27,7 @@ npm run preview   # معاينة dist على http://localhost:4173
 ### GitHub Pages (مثال)
 
 1. ارفع المشروع على الريبو الذي سترسله.
-2. **Settings → Pages → Build and deployment**: اختر المصدر **GitHub Actions**.
+2. **Settings → Pages → Build and deployment**: اختر المصدر **GitHub Actions** (لو Deploy فشل بـ 404، الصفحة كانت غير مفعّلة — فعّلها من الرابط أعلاه ثم أعد تشغيل الـ workflow).
 3. عند كل `push` على `main` (أو `master`)، الوركفلو `.github/workflows/deploy-pages.yml` يشغّل `npm run build` وينشر مجلد `dist/`.
 4. المسارات في المشروع نسبية (`./`) وتعمل من جذر الدومين أو من مسار فرعي مثل `https://user.github.io/repo-name/`.
 
