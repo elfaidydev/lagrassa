@@ -38,6 +38,7 @@ function buildMenu(items) {
       .map((i) => ({
         name: i.nameAr,
         price: i.price,
+        sizes: i.sizes,
         img: i.image || PLACEHOLDER,
         tint: meta.tint,
         shade: meta.shade,
@@ -216,7 +217,28 @@ function layout(first, delta = 0) {
   tables.forEach((t, i) => t.classList.toggle("is-on", i === i0));
   counter.textContent = `${String(i0 + 1).padStart(2, "0")} / ${String(N).padStart(2, "0")}`;
 
-  const setInfo = () => { nameEl.innerHTML = splitText(d.name); nameEl.setAttribute("aria-label", d.name); priceEl.textContent = d.price; };
+  const setInfo = () => {
+    nameEl.innerHTML = splitText(d.name);
+    nameEl.setAttribute("aria-label", d.name);
+    const wrap = priceEl.closest(".info__price");
+    const loneSar = wrap?.querySelector(":scope > .sar");
+    if (d.sizes?.length) {
+      wrap?.classList.add("is-dual");
+      priceEl.innerHTML = d.sizes
+        .map(
+          (s) =>
+            `<span class="price-tier"><span class="price-tier__label">${s.label}</span><span class="price-tier__val"><span class="price-tier__amt">${s.price}</span><span class="sar" role="img" aria-label="ريال سعودي"></span></span></span>`,
+        )
+        .join('<span class="price-tier__sep" aria-hidden="true"></span>');
+      loneSar?.setAttribute("hidden", "");
+      priceEl.setAttribute("aria-label", d.sizes.map((s) => `${s.label} ${s.price} ريال`).join("، "));
+    } else {
+      wrap?.classList.remove("is-dual");
+      priceEl.textContent = d.price;
+      priceEl.removeAttribute("aria-label");
+      loneSar?.removeAttribute("hidden");
+    }
+  };
   clearTimeout(swapTimer);
   if (first) setInfo();
   else {
@@ -348,7 +370,12 @@ app.addEventListener("touchend", () => { touch0 = null; });
 app.addEventListener("touchcancel", () => { touch0 = null; });
 
 /* ── first paint (no travel), and re-fit on resize / rotation ── */
+let lastFitStageW = -1;
 function fit() {
+  const w = stage.clientWidth;
+  /* ارتفاع الـ stage يتغير لما اسم/سعر الشريط السفلي يكبر — ResizeObserver يفعّل fit ويقطع أنيميشن العجلة */
+  if (lastFitStageW >= 0 && Math.abs(w - lastFitStageW) <= 2) return;
+  lastFitStageW = w;
   ring.classList.add("no-transition");
   slots.forEach((p) => p.classList.add("no-transition"));
   geometry();

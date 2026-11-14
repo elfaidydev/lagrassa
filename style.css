@@ -223,7 +223,8 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 .info__in.is-swapping { opacity: 0; transform: translateY(8px); }
 .info__name { font-family: "Cairo", "Playfair Display", Georgia, serif; font-size: clamp(26px, 7vw, 44px); font-weight: 600; line-height: 1.35; letter-spacing: 0; text-wrap: balance; }
 .info__price {
-  margin-top: 10px; display: inline-flex; align-items: center; gap: 0.35em;
+  margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 0.35em;
+  min-height: clamp(46px, 11vw, 54px);
   color: var(--gold);
   font-family: "Playfair Display", "Cairo", Georgia, serif;
   font-size: clamp(34px, 9vw, 48px); font-weight: 500; line-height: 1;
@@ -231,6 +232,62 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 }
 .info__price::before, .info__price::after { content: none; }
 #price { font-variant-numeric: tabular-nums; }
+.info__price.is-dual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(26px, 6.5vw, 38px);
+}
+.info__price.is-dual > .sar[hidden] { display: none; }
+.info__price.is-dual #price {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+#price .price-tier {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding-inline: clamp(14px, 3.8vw, 22px);
+  white-space: nowrap;
+}
+#price .price-tier__label {
+  font-family: "Cairo", sans-serif;
+  font-size: max(13px, 0.46em);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--cream);
+  opacity: 0.9;
+}
+#price .price-tier__val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22em;
+  line-height: 1;
+}
+#price .price-tier__amt { font-variant-numeric: tabular-nums; line-height: 1; }
+.info__price.is-dual #price .price-tier .sar {
+  width: 0.44em;
+  height: 0.5em;
+  max-width: 16px;
+  max-height: 18px;
+  margin: 0;
+  opacity: 0.92;
+  flex-shrink: 0;
+}
+#price .price-tier__sep {
+  flex: none;
+  align-self: stretch;
+  width: 2px;
+  min-height: 1.45em;
+  margin-block: 0.12em;
+  border-radius: 1px;
+  background: rgba(245, 237, 216, 0.22);
+  box-shadow: 0 0 0 0.5px rgba(227, 212, 176, 0.35);
+}
 .sar {
   flex: none; display: block;
   width: 0.78em; height: 0.88em;
