@@ -476,8 +476,44 @@ async function start() {
 
 function registerCacheWorker() {
   if (!("serviceWorker" in navigator)) return;
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
+  const activateWaiting = (reg) => {
+    const w = reg.waiting;
+    if (w) w.postMessage({ type: "SKIP_WAITING" });
+  };
+
+  const checkForUpdates = async (reg) => {
+    try {
+      await reg.update();
+    } catch { /* offline */ }
+    activateWaiting(reg);
+  };
+
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+      reg.addEventListener("updatefound", () => {
+        const sw = reg.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) activateWaiting(reg);
+        });
+      });
+      await checkForUpdates(reg);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") checkForUpdates(reg);
+      });
+      window.addEventListener("pageshow", (e) => {
+        if (e.persisted) checkForUpdates(reg);
+      });
+    } catch { /* private mode / blocked */ }
   });
 }
 

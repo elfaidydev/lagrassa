@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** Production build -> ./dist (GitHub Pages / static hosting). */
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,8 +11,38 @@ const threeSrc = path.join(root, "node_modules/three/build/three.module.js");
 const threeDst = path.join(dist, "vendor/three/build/three.module.js");
 
 const COPY_FILES = [
-  "style.css", "script.js", "fx.js", "cache.js", "sw.js", "menu.json",
+  "style.css", "script.js", "fx.js", "cache.js", "menu.json",
 ];
+
+function computeBuildId() {
+  const hash = crypto.createHash("sha256");
+  for (const f of ["index.html", ...COPY_FILES, "sw.js"]) {
+    const p = path.join(root, f);
+    if (fs.existsSync(p)) hash.update(fs.readFileSync(p));
+  }
+  const productsDir = path.join(root, "assets/products");
+  if (fs.existsSync(productsDir)) {
+    for (const name of fs.readdirSync(productsDir).sort()) {
+      hash.update(name);
+      hash.update(fs.readFileSync(path.join(productsDir, name)));
+    }
+  }
+  return hash.digest("hex").slice(0, 12);
+}
+
+function writeServiceWorker(buildId) {
+  const src = fs.readFileSync(path.join(root, "sw.js"), "utf8");
+  const out = src.replace(
+    /const BUILD_ID = "dev";/,
+    `const BUILD_ID = "${buildId}";`,
+  );
+  if (out === src) {
+    console.warn("  sw.js: BUILD_ID marker not found — using source as-is.");
+    fs.writeFileSync(path.join(dist, "sw.js"), src);
+    return;
+  }
+  fs.writeFileSync(path.join(dist, "sw.js"), out);
+}
 const SKIP_ASSETS = new Set(["assets/img", "assets/logo.svg", "assets/.DS_Store"]);
 
 function rmrf(p) {
@@ -42,8 +73,11 @@ function copyAssets() {
 rmrf(dist);
 fs.mkdirSync(dist, { recursive: true });
 
+const buildId = computeBuildId();
+
 for (const f of COPY_FILES) copyFile(path.join(root, f), path.join(dist, f));
 
+writeServiceWorker(buildId);
 copyAssets();
 
 if (!fs.existsSync(threeSrc)) {
@@ -61,6 +95,7 @@ fs.writeFileSync(path.join(dist, "index.html"), html);
 
 const manifest = {
   builtAt: new Date().toISOString(),
+  buildId,
   files: [],
 };
 const walkDist = (dir, base = "") => {
