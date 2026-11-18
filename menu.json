@@ -14,7 +14,6 @@
   { "categoryId": "salads", "nameAr": "سلطة لاغراسا", "price": 14, "image": "assets/products/03-crispy-chicken-salad.png" },
   { "categoryId": "sandwiches", "nameAr": "كاساديا", "price": 12, "image": "assets/products/05-quesadillas.png" },
   { "categoryId": "sandwiches", "nameAr": "فاهيتا", "price": 12, "image": "assets/products/06-sandwich.png" },
-  { "categoryId": "sides", "nameAr": "تشيز كوركت", "price": 10, "image": null },
   { "categoryId": "sides", "nameAr": "فرايز بوب كورن", "price": 14, "image": "assets/products/01-loaded-fries.png" },
   { "categoryId": "sides", "nameAr": "فرايز مبهر", "price": 6, "image": "assets/products/02-fries-cup.png" },
   { "categoryId": "sides", "nameAr": "كرات الجبن", "price": 12, "image": "assets/products/12-loaded-bites.png" }

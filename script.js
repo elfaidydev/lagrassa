@@ -52,7 +52,7 @@ function buildMenu(items) {
 
 let MENU = [];
 
-const STEP_DEG = 23;                    /* spacing of the dots on the arc */
+let arcStepDeg = 23;                    /* sync’d with wheel --step in geometry() */
 const RTL = document.documentElement.getAttribute("dir") === "rtl";
 /** Map UI step direction to wheel spin (RTL mirrors horizontal flow). */
 const spinDir = (d) => (RTL ? -d : d);
@@ -61,6 +61,20 @@ const $ = (id) => document.getElementById(id);
 const app = $("app"), stage = $("stage"), stageIn = $("stageIn"), ring = $("ring"), arc = $("arc");
 const nameEl = $("name"), priceEl = $("price"), infoIn = $("infoIn"), counter = $("counter"), tablesEl = $("tables");
 const tabsEl = $("tabs"), indEl = $("tabInd");
+const pastaExtrasEl = $("pastaExtras");
+
+const isPastaCat = (i) => MENU[i]?.key === "pasta";
+
+function setPastaExtrasVisible(show, { immediate = false } = {}) {
+  if (!pastaExtrasEl) return;
+  pastaExtrasEl.classList.toggle("is-visible", show);
+  pastaExtrasEl.setAttribute("aria-hidden", show ? "false" : "true");
+  pastaExtrasEl.classList.toggle("no-motion", immediate || REDUCED);
+  requestAnimationFrame(() => {
+    lastFitStageH = -1;
+    fit();
+  });
+}
 
 const fx = createFX($("fx"));
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -136,21 +150,56 @@ function hydratePieImages() {
 function geometry() {
   const w = stage.clientWidth, h = stage.clientHeight;
   const wide = w / h > 1.25;
-  const gap = Math.min(44, Math.max(24, w * 0.035));
-  const ctrl = wide ? 0 : 84;                    /* room for the buttons under the pie */
-  const topPad = 14, botPad = wide ? 30 : 6;
-  const availH = h - ctrl - topPad - botPad - gap;
+  const touch = matchMedia("(pointer: coarse)").matches;
+  const gap = Math.min(44, Math.max(20, w * 0.032));
+  const ctrl = wide ? 0 : (touch ? 70 : 84);
+  const pastaGap = pastaExtrasEl?.classList.contains("is-visible")
+    ? (wide ? 20 : touch ? 26 : 18)
+    : 0;
+  const topPad = (wide ? 12 : 6) + pastaGap;
+  const botPad = wide ? 26 : 2;
+  const availH = Math.max(120, h - ctrl - topPad - botPad - gap);
   const productWide = stage.dataset.product === "wide";
-  const D = Math.max(120, Math.min(availH, w * (wide ? 0.62 : 0.76), 760));
+
+  let widthK, heightK, maxD, spreadK, ringK, arcMul, cyBias;
+  if (wide) {
+    const desk = w >= 960;
+    widthK = desk ? 0.58 : 0.54;
+    heightK = desk ? 0.86 : 0.82;
+    maxD = desk ? 660 : 600;
+    spreadK = desk ? 1.22 : 1.14;
+    ringK = desk ? 2.18 : 2.12;
+    arcMul = desk ? 2.45 : 2.2;
+    cyBias = 0.52;
+  } else if (touch) {
+    widthK = 0.8;
+    heightK = 0.84;
+    maxD = 720;
+    spreadK = 1.12;
+    ringK = 2.16;
+    arcMul = 2.0;
+    cyBias = 0.5;
+  } else {
+    widthK = 0.72;
+    heightK = 0.88;
+    maxD = 680;
+    spreadK = 1.1;
+    ringK = 2.14;
+    arcMul = 2.05;
+    cyBias = 0.46;
+  }
+
+  const D = Math.max(120, Math.min(availH * heightK, w * widthK, maxD));
   const Dw = productWide ? Math.min(w * 0.92, D * 1.78) : D;
   const Dh = productWide ? D * 0.82 : D;
   const extra = Math.max(0, availH - Dh);
-  const cy = topPad + gap + Dh / 2 + extra * 0.5;
-  const R = D * 2.1;
-  const S = (productWide ? Dw : D) * 1.08;
+  const cy = topPad + gap + Dh / 2 + extra * cyBias;
+  const R = D * ringK;
+  const S = (productWide ? Dw : D) * spreadK;
   const step = (S / R) * 180 / Math.PI;
+  arcStepDeg = step;
   const btn = wide ? 56 : 48;
-  const bx = wide ? Math.max(8, w / 2 - Dw / 2 - btn - 22) : Math.max(18, w * 0.06);
+  const bx = wide ? Math.max(8, w / 2 - Dw / 2 - btn - 22) : Math.max(14, w * 0.05);
 
   const s = stageIn.style;
   s.setProperty("--D", D + "px");
@@ -160,7 +209,7 @@ function geometry() {
   s.setProperty("--cy", cy + "px");
   s.setProperty("--step", step + "deg");
   s.setProperty("--bx", bx + "px");
-  const arcSize = Math.max(D, Dw) + gap * 2;
+  const arcSize = Math.max(D, Dw) + gap * arcMul;
   arc.style.width = arcSize + "px";
   arc.style.top = (cy - arcSize / 2) + "px";
   stage.dataset.mode = wide ? "wide" : "narrow";
@@ -174,7 +223,7 @@ function geometry() {
 /* ── arc dots ── */
 function placeDot(d, slot, snap) {
   const vis = RTL ? -slot : slot;
-  const a = vis * STEP_DEG * Math.PI / 180;
+  const a = vis * arcStepDeg * Math.PI / 180;
   if (snap) d.classList.add("no-transition");
   d.style.left = (50 + 50 * Math.sin(a)) + "%";
   d.style.top = (50 - 50 * Math.cos(a)) + "%";
@@ -370,12 +419,13 @@ app.addEventListener("touchend", () => { touch0 = null; });
 app.addEventListener("touchcancel", () => { touch0 = null; });
 
 /* ── first paint (no travel), and re-fit on resize / rotation ── */
-let lastFitStageW = -1;
+let lastFitStageW = -1, lastFitStageH = -1;
 function fit() {
-  const w = stage.clientWidth;
-  /* ارتفاع الـ stage يتغير لما اسم/سعر الشريط السفلي يكبر — ResizeObserver يفعّل fit ويقطع أنيميشن العجلة */
-  if (lastFitStageW >= 0 && Math.abs(w - lastFitStageW) <= 2) return;
+  const w = stage.clientWidth, h = stage.clientHeight;
+  /* ارتفاع الـ stage يتغير (شريط السعر، إضافات الباستا…) — نعيد القياس بدون قصّ الأنيميشن إلا لو تغيّر فعلي */
+  if (lastFitStageW >= 0 && Math.abs(w - lastFitStageW) <= 2 && Math.abs(h - lastFitStageH) <= 2) return;
   lastFitStageW = w;
+  lastFitStageH = h;
   ring.classList.add("no-transition");
   slots.forEach((p) => p.classList.add("no-transition"));
   geometry();
@@ -411,7 +461,10 @@ addEventListener("resize", () => moveInd(false));
 async function switchTab(ci) {
   if (ci === cat || busy) return;
   const dir = ci > cat ? 1 : -1;
+  const leavingPasta = isPastaCat(cat) && !isPastaCat(ci);
+  const enteringPasta = isPastaCat(ci);
   busy = true;
+  if (leavingPasta) setPastaExtrasVisible(false);
   tabBtns.forEach((b, i) => { b.classList.toggle("is-active", i === ci); b.setAttribute("aria-selected", i === ci); });
   cat = ci; moveInd();                       /* indicator slides right away */
   app.classList.add("is-switching");
@@ -437,6 +490,7 @@ async function switchTab(ci) {
   await wait(REDUCED ? 0 : 1700);
   ring.style.transitionDuration = "";
   app.style.setProperty("--d0", "0s");
+  if (enteringPasta) setPastaExtrasVisible(true);
   busy = false;
 }
 
@@ -472,6 +526,10 @@ async function start() {
   ring.style.transitionDuration = "";
   slots.forEach((p) => { p.style.transitionDuration = ""; });
   intro.classList.add("is-gone");
+  if (isPastaCat(cat)) {
+    pastaExtrasEl?.classList.remove("no-motion");
+    setPastaExtrasVisible(true);
+  }
 }
 
 function registerCacheWorker() {
@@ -535,6 +593,7 @@ async function init() {
   }
   initTabs();
   mount(0);
+  setPastaExtrasVisible(isPastaCat(0), { immediate: true });
   moveInd(false);
   document.fonts && document.fonts.ready.then(() => moveInd(false));
   ring.classList.add("no-transition");
