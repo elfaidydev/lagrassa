@@ -309,7 +309,13 @@ h1 { font-family: "Playfair Display", "Cairo", Georgia, serif; font-weight: 400;
 }
 .info__in { transition: opacity .3s, transform .3s; }
 .info__in.is-swapping { opacity: 0; transform: translateY(8px); }
-.info__name { font-family: "Cairo", "Playfair Display", Georgia, serif; font-size: clamp(26px, 7vw, 44px); font-weight: 600; line-height: 1.35; letter-spacing: 0; text-wrap: balance; }
+.info__name {
+  font-family: "Cairo", "Playfair Display", Georgia, serif;
+  font-size: clamp(26px, 7vw, 44px); font-weight: 600; line-height: 1.35; letter-spacing: 0;
+  text-wrap: balance;
+  /* ارتفاع ثابت تقريبًا يمنع قصّ أنيميشن العجلة عند تغيّر الاسم */
+  min-height: calc(1.35em * 2);
+}
 .info__price {
   margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 0.35em;
   min-height: clamp(46px, 11vw, 54px);

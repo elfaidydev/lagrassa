@@ -97,6 +97,45 @@ let tables = [], slots = [], pies = [], dots = [], prevSlots = [];
 let criticalUrls = new Set();
 let turn = 0;                            /* running count, may be negative or past N */
 let busy = false;
+let busyTimer = 0;
+let pendingFit = false;
+
+function turnMs() {
+  if (REDUCED) return 0;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--t").trim();
+  if (!raw) return 1100;
+  if (raw.endsWith("ms")) return parseFloat(raw) || 1100;
+  if (raw.endsWith("s")) return (parseFloat(raw) || 1.1) * 1000;
+  return 1100;
+}
+
+function releaseStepLock() {
+  busy = false;
+  if (pendingFit) fit();
+}
+
+function lockStep() {
+  busy = true;
+  clearTimeout(busyTimer);
+  if (REDUCED) {
+    queueMicrotask(releaseStepLock);
+    return;
+  }
+  let settled = false;
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    ring.removeEventListener("transitionend", onEnd);
+    clearTimeout(busyTimer);
+    releaseStepLock();
+  };
+  const onEnd = (e) => {
+    if (e.target !== ring || e.propertyName !== "transform") return;
+    finish();
+  };
+  ring.addEventListener("transitionend", onEnd);
+  busyTimer = setTimeout(finish, turnMs() + 140);
+}
 const idx = (t) => ((t % N) + N) % N;
 const slotOf = (i, t) => ((i - idx(t) + N + HALF) % N) - HALF;     /* -HALF .. HALF */
 
@@ -296,7 +335,6 @@ function layout(first, delta = 0) {
   }
 }
 
-function lock(ms) { busy = true; setTimeout(() => { busy = false; }, ms); }
 function step(dir) {
   if (busy || N < 2) return false;
   if (N === 2) {
@@ -306,7 +344,7 @@ function step(dir) {
     turn += dir;
   }
   layout(false, dir);
-  lock(750);
+  lockStep();
   if (fx) fx.kick(spinDir(dir));
   return true;
 }
@@ -318,7 +356,7 @@ function goTo(i) {
   if (N === 2) turn = i;
   else turn += d;
   layout(false, d);
-  lock(900);
+  lockStep();
   if (fx) fx.kick(spinDir(Math.sign(d)));
 }
 
@@ -364,7 +402,7 @@ function swipeStep(dir) {
   if (swipeLock || N < 2) return false;
   if (!step(dir)) return false;
   swipeLock = true;
-  setTimeout(() => { swipeLock = false; }, 520);
+  setTimeout(() => { swipeLock = false; }, turnMs() + 80);
   return true;
 }
 let swipe = null;
@@ -424,6 +462,12 @@ function fit() {
   const w = stage.clientWidth, h = stage.clientHeight;
   /* ارتفاع الـ stage يتغير (شريط السعر، إضافات الباستا…) — نعيد القياس بدون قصّ الأنيميشن إلا لو تغيّر فعلي */
   if (lastFitStageW >= 0 && Math.abs(w - lastFitStageW) <= 2 && Math.abs(h - lastFitStageH) <= 2) return;
+  /* أثناء دوران العجلة: أي fit يقطع الـ transition — نؤجّله لنهاية الحركة */
+  if (busy) {
+    pendingFit = true;
+    return;
+  }
+  pendingFit = false;
   lastFitStageW = w;
   lastFitStageH = h;
   ring.classList.add("no-transition");
@@ -492,6 +536,7 @@ async function switchTab(ci) {
   app.style.setProperty("--d0", "0s");
   if (enteringPasta) setPastaExtrasVisible(true);
   busy = false;
+  if (pendingFit) fit();
 }
 
 /* ── intro: preload every picture, then lift the curtain and roll the dishes in ── */
